@@ -19,5 +19,3 @@ jobs:
           script: |
             cd /var/www/mon-site
             git pull origin main
-            # npm install && npm run build  ← si besoin
-            # systemctl restart mon-app    ← si besoin
