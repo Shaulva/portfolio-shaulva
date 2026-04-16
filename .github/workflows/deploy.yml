@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # v4 au lieu de v3
+      - uses: actions/checkout@v4
 
       - name: Install cloudflared
         run: |
@@ -22,12 +22,18 @@ jobs:
             ProxyCommand cloudflared access ssh --hostname ssh.shaulva.fr
             StrictHostKeyChecking no" > ~/.ssh/config
 
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ssh.shaulva.fr
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ~/.ssh/deploy_key
           script: |
             cd /var/www/mon-site
             git pull origin main
