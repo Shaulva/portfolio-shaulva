@@ -15,25 +15,26 @@ jobs:
           curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: Setup SSH config for Cloudflare Tunnel
-        run: |
-          mkdir -p ~/.ssh
-          echo "Host ssh.shaulva.fr
-            ProxyCommand cloudflared access ssh --hostname ssh.shaulva.fr
-            StrictHostKeyChecking no" > ~/.ssh/config
-
       - name: Write SSH key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/deploy_key
+          chmod 600 /home/runner/.ssh/deploy_key
+
+      - name: Setup SSH config
+        run: |
+          cat >> /home/runner/.ssh/config << 'EOF'
+          Host ssh.shaulva.fr
+            ProxyCommand cloudflared access ssh --hostname ssh.shaulva.fr
+            StrictHostKeyChecking no
+            IdentityFile /home/runner/.ssh/deploy_key
+          EOF
+          chmod 600 /home/runner/.ssh/config
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ssh.shaulva.fr
-          username: ${{ secrets.SERVER_USER }}
-          key_path: ~/.ssh/deploy_key
-          script: |
-            cd /var/www/mon-site
-            git pull origin main
+        run: |
+          ssh -i /home/runner/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              -o ProxyCommand="cloudflared access ssh --hostname ssh.shaulva.fr" \
+              ${{ secrets.SERVER_USER }}@ssh.shaulva.fr \
+              "cd /var/www/mon-site && git pull origin main"
