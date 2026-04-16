@@ -32,4 +32,4 @@ jobs:
           chmod 600 /home/runner/.ssh/config
 
       - name: Deploy via SSH
-        run: ssh -i /home/runner/.ssh/deploy_key -o StrictHostKeyChecking=no -o ProxyCommand="cloudflared access ssh --hostname ssh.shaulva.fr" ${{ secrets.SERVER_USER }}@ssh.shaulva.fr "cd /var/www/shaulva&& git pull origin main"
+        run: ssh -i /home/runner/.ssh/deploy_key -o StrictHostKeyChecking=no -o ProxyCommand="cloudflared access ssh --hostname ssh.shaulva.fr" ${{ secrets.SERVER_USER }}@ssh.shaulva.fr "cd /var/www/shaulva && git pull origin main"
