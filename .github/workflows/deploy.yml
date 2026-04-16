@@ -8,22 +8,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # v4 au lieu de v3
 
       - name: Install cloudflared
         run: |
           curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: Deploy via SSH over Cloudflare Tunnel
+      - name: Setup SSH config for Cloudflare Tunnel
+        run: |
+          mkdir -p ~/.ssh
+          echo "Host ssh.shaulva.fr
+            ProxyCommand cloudflared access ssh --hostname ssh.shaulva.fr
+            StrictHostKeyChecking no" > ~/.ssh/config
+
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ssh.shaulva.fr
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          proxy_host: ssh.shaulva.fr
-          proxy_port: 443
-          proxy_command: cloudflared access ssh --hostname ssh.shaulva.fr
           script: |
             cd /var/www/mon-site
             git pull origin main
